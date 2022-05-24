@@ -1,5 +1,5 @@
 
-
+// https://share.vidyard.com/watch/xLWD1XRtfmjgZiivQc1ZXT?
 
 class Conversation{
     constructor(sender_id, recipient_id) {
@@ -12,45 +12,53 @@ class Conversation{
         return obj;
     }
 
-    // static fetchRecipient(recipientData) {
-        
+    static createConversation(senderIdString,recipientIdString, e){
 
-    //     const userURL = "http://localhost:3000/users";
+        //convert the sender and recipient string data from event Listener input to Integer
+        const senderID = parseInt(senderIdString);
+        const recipientID = parseInt(recipientIdString);
+    
+        const newMessage = e.target.children[0].value
+        if (newMessage === "") {
+            return window.alert("You entered a blank username")
+        } else {
+            //Post to Conversation Create Controller
+            const newConversation =   Conversation.newConversationPush(senderID, recipientID,newMessage )
+            console.log(`Conversation Data ${newConversation}`)
+            return newConversation
+        }
+    }
 
-    //     return fetch(userURL)
-    //     .then(function(response) {
-    //           return response.json();
-    //     })
-    //     .then(function(userJson) {
-    //         return Conversation.returnRecipient(userJson, recipientData)
-    //     } )  
-    //     .catch(function(error) {
-    //         alert("Cannot get index User Controllers");
-    //         console.log(error.message);
-    //     });
-    // }
+    static fetchConversation(sender_id, recipient_id) {
 
- 
-        // static returnRecipient(array, recipient){
-        //     let copyOfuserJson = Object.assign({}, array)
-        //     let recipientObject = []
+    
+        const userURL = "http://localhost:3000/conversations";
+        return fetch(userURL)
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(userJson) {
+            const messageList =  document.querySelector("#message-list")
 
+            //Ensure that the mesage li items are refreshed 
+            messageList.innerHTML = ""
             
-        //      copyOfuserJson['data'].forEach( user => {
-        //          if (user['attributes']['username'] === recipient) {
-        //                 return recipientObject.push(user)
-        //         }
-        //     })   
-        //     console.log(recipientObject[0]['id'])
-        //     return recipientObject[0]['id']  
-        // }
+            return Conversation.renderConversation(userJson, sender_id, recipient_id)
+            console.log(userJson);   
+        })
+        .catch(function(error) {
+            // alert("Conversation could not be rendered on screen");
+            console.log(error.message);
+        });
 
+        
+    }
 
-
+    //Post to Create Method in Conversation Controller 
+    //Call Post Method in Message Controller to tie Conversation and Message together.
     static newConversationPush(senderId, recipientID, newMessage){
 
-        
-        
+    
         const userURL = "http://localhost:3000/conversations";
         
         const configurationObject = {
@@ -73,20 +81,13 @@ class Conversation{
             console.log(`${senderId}`)
             console.log(`${conversation['data']['id']}`)
             console.log(newMessage)
-
-            // const sendForm = document.getElementsByClassName("send-message")[0]
-            // console.log(`Conversation ${conversation}`);
-            // console.log(`Conversation Object Data ${conversationObject}`)
             
             
-            // const newMessage = e.target.children[0].value
+           const chatbox =  document.querySelector("#chatbox")
+           chatbox.className = conversation['data']['id']
             
-            // console.log(`newMessage is ${newMessage}`)
-
-            // let newMessageObject= new Message(senderId, conversationObject, newMessage)
-            // console.log(`new Message Object is ${newMessage}`)
-
-            
+           //POST Action in Message Controller in Create Method
+           //New Message Instance Created in database
             return Message.postMessage(senderId, parseInt(`${conversation['data']['id']}`), newMessage )
             // console.log(newMessageObject)
             // return newMessageObject
@@ -98,52 +99,65 @@ class Conversation{
         
     }
 
-    static fetchConversation(sender_id, recipient_id) {
-
-        const userURL = "http://localhost:3000/conversations";
-        return fetch(userURL)
-        .then(function(response) {
-            return response.json();
-        })
-        .then(function(userJson) {
-            return Conversation.renderConversation(userJson, sender_id, recipient_id)
-            console.log(userJson);   
-        })
-        .catch(function(error) {
-            alert("Conversation could not be rendered on screen");
-            console.log(error.message);
-        });
-    }
-
 
     static renderConversation(array, sender_id, recipient_id){
-        const arrayData = array['data']
-        const convo = []
         
+        
+        const arrayData = array['data']
+        let convo 
+       
+        
+        //Related to fetchingConversation. Iterete through array of all conversations.
+        //if within array can find sender_id and recipient_id then pass data into convo which will hold messages. 
+        //Also look for sender_id and recipient_id interchanged so if UserA was sender or the recipient of conversation.
+        //New Message Instance Created in database
         for (let i = 0; i < arrayData.length; i++) {
-            debugger
-            if (array['data'][i]['attributes']['conversation_id'] == sender_id) {
-
+            if (array['data'][i]['attributes']['sender_id']  === parseInt(`${sender_id}`)  &&  array['data'][i]['attributes']['recipient_id'] === parseInt(`${recipient_id}`)) {
+                convo = array['data'][i]['attributes']
+            } else if (array['data'][i]['attributes']['sender_id']  === parseInt(`${recipient_id}`)  &&  array['data'][i]['attributes']['recipient_id'] === parseInt(`${sender_id}`)) {
+                convo = array['data'][i]['attributes']
             }
-
-
-            // array['data'][i]
-            // console.log(arrayData)
           }
+
+          debugger 
+
+          let messages = convo['messages']
+          
+
+          //fetch user data 
+
+
+
+
+
+   
+        let chatbot = document.querySelector("#chatbox")
+
+        
+        
+        let listElement = document.querySelector("#message-list")
+
+
+          for (let i = 0; i < messages.length; i++) {
+
+            debugger
+            console.log(convo.messages[i].content)            
+            let li = document.createElement('li')
+            li.innerText =  convo.messages[i].content
+            listElement.appendChild(li)
+            
+          }
+  
+  
     }
 
 
+    //function to fetchconversation
 
-    // changeto fetch and create conversation
-
-    
-
-
-    // console.log (Conversation.makeConversation(senderId, user.id))
-                    // debugger
-                    // return Conversation.makeConversation(senderId, user.id)
-
-
-
-
+    static grabMessages(sender_id, recipient_id){
+        Conversation.fetchConversation(sender_id, recipient_id)
+    }
 }
+
+
+
